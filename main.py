@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QFileDialog, QProgressDialog
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QFileDialog, QProgressDialog, QMessageBox, QSpinBox
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QThread, Signal
 from rapidocr_onnxruntime import RapidOCR
@@ -45,23 +45,38 @@ class MainWindow(QWidget):
 
         # 左边布局
         leftLayout = QVBoxLayout()
-        self.uploadButton = QPushButton("上传图片")
+        self.imageCountLabel = QLabel("图片数量: 0")
+        leftLayout.addWidget(self.imageCountLabel)
         self.imageList = QListWidget()
-        leftLayout.addWidget(self.uploadButton)
         leftLayout.addWidget(self.imageList)
-        self.uploadButton.clicked.connect(self.uploadImage)
 
         # 中间布局
         centerLayout = QVBoxLayout()
+        self.uploadButton = QPushButton("上传图片")
+        centerLayout.addWidget(self.uploadButton)
+        self.uploadButton.clicked.connect(self.uploadImage)
+        
         self.recognizeButton = QPushButton("识别")
         centerLayout.addWidget(self.recognizeButton)
         self.recognizeButton.clicked.connect(self.recognizeImage)
+        
+        self.sbDiffValue = QSpinBox()
+        self.sbDiffValue.setRange(1, 5000)
+        self.sbDiffValue.setValue(100)
+        centerLayout.addWidget(self.sbDiffValue)
+        
+        self.btnCheckResult = QPushButton("校验")
+        centerLayout.addWidget(self.btnCheckResult)
+        self.btnCheckResult.clicked.connect(self.checkResult)
+        
         self.btnClean = QPushButton("清除")
         centerLayout.addWidget(self.btnClean)
         self.btnClean.clicked.connect(self.cleanAll)
 
         # 右边布局
         rightLayout = QVBoxLayout()
+        self.resultCountLabel = QLabel("识别数量: 0")
+        rightLayout.addWidget(self.resultCountLabel)
         self.resultList = QListWidget()
         rightLayout.addWidget(self.resultList)
 
@@ -75,9 +90,11 @@ class MainWindow(QWidget):
 
 
     def uploadImage(self):
-        filePath, _ = QFileDialog.getOpenFileName(self, "选择图片", "", "图片文件 (*.jpg *.png *.bmp)")
-        if filePath:
-            self.imageList.addItem(filePath)
+        filePaths, _ = QFileDialog.getOpenFileNames(self, "选择图片", "", "图片文件 (*.jpg *.png *.bmp)")
+        if filePaths:
+            for filePath in filePaths:
+                self.imageList.addItem(filePath)
+            self.imageCountLabel.setText(f"图片数量: {self.imageList.count()}")
             
 
     def recognizeImage(self):
@@ -91,17 +108,44 @@ class MainWindow(QWidget):
         self.recognitionThread.start()
         
         
+    def checkResult(self):
+        diffValue = self.sbDiffValue.value()
+        if diffValue<=0:
+            QMessageBox.warning(self, "异常", "请设定合理的临界值")
+            return
+        
+        for i in range(self.resultList.count() - 1):
+            item1 = self.resultList.item(i).text()
+            item2 = self.resultList.item(i + 1).text()
+            
+            # 这里假设item1和item2都是数字，你可以根据实际情况修改
+            if item1.isdigit() and item2.isdigit():
+                diff = abs(int(item1) - int(item2))
+                if diff < 100:
+                    QMessageBox.warning(self, "错误", f"发现相邻号码差值小于100, 号码: {item1} 和 {item2}")
+                    return
+            else:
+                QMessageBox.warning(self, f"识别结果不是数字: {item1} 或 {item2}")
+        
+        QMessageBox.information(self, "校验通过", "未发现异常号码")
+        
+        
     def updateProgressDialog(self, progress):
         self.loading_dialog.setValue(progress)
         
         
     def recognitionFinished(self):
         self.loading_dialog.close()
+        self.resultCountLabel.setText(f"识别数量: {self.resultList.count()}")
+        self.resultList.sortItems()
         
         
     def cleanAll(self):
         self.imageList.clear()
         self.resultList.clear()
+        self.imageCountLabel.setText(f"图片数量: {self.imageList.count()}")
+        self.resultCountLabel.setText(f"识别数量: {self.resultList.count()}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
