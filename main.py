@@ -29,8 +29,8 @@ class RecognitionThread(QThread):
                     print(numbers)
                     self.resultList.addItem(numbers)
                     
-                    progress = (i + 1) * 100 // imageListSize
-                    self.progressUpdated.emit(progress)
+            progress = (i + 1) * 100 // imageListSize
+            self.progressUpdated.emit(progress)
         self.finished.emit()
 
 
@@ -89,30 +89,6 @@ class MainWindow(QWidget):
         self.recognitionThread.progressUpdated.connect(self.updateProgressDialog)
         self.recognitionThread.finished.connect(self.recognitionFinished)
         self.recognitionThread.start()
-        
-        # for i in range(self.imageList.count()):
-        #     imgPath = self.imageList.item(i).text()
-        #     result, elapse = engine(imgPath, use_det=True, use_cls=False, use_rec=True) # 检测+识别
-        #     texts = [item[1] for item in result]
-        #     target_text = '号码'
-        #     for text in texts:
-        #         if text.startswith(target_text):
-        #             # print(text) # 号码：01819689
-        #             numbers = ''.join(filter(str.isdigit, text))
-        #             print(numbers)
-        #             self.resultList.addItem(numbers)
-                    
-        # img_path = 'test.jpg'
-        # result, elapse = engine(img_path, use_det=True, use_cls=False, use_rec=True) # 检测+识别
-        # texts = [item[1] for item in result]
-        # target_text = '号码'
-        # for text in texts:
-        #     if text.startswith(target_text):
-        #         # print(text) # 号码：01819689
-        #         numbers = ''.join(filter(str.isdigit, text))
-        #         print(numbers)
-        #         self.resultList.addItem(numbers)
-        
         
         
     def updateProgressDialog(self, progress):
