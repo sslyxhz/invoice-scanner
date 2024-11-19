@@ -1,2 +1,3 @@
 PySide6
 rapidocr_onnxruntime
+pyinstaller
