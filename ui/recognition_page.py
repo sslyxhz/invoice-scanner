@@ -23,7 +23,7 @@ class RecognitionPage(QWidget):
         self.imagePreviewLabel = QLabel()
         leftLayout.addWidget(self.imagePreviewLabel)
         pixmap = QPixmap(self.dataModel.targetImage)
-        scaled_pixmap = pixmap.scaled(400,300)
+        scaled_pixmap = pixmap.scaled(400, 300)
         self.imagePreviewLabel.setPixmap(scaled_pixmap)
         
 

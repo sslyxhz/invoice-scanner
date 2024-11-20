@@ -22,7 +22,7 @@ class MainWindow(QWidget):
         self.index_page = IndexPage(self.dataModelMap)
         self.index_page.signal_image_selected.connect(self.on_image_selected)
         
-        self.current_page = 1
+        self.current_page = 0
         self.pages = [
             self.index_page,
         ]
