@@ -6,7 +6,7 @@ from action.recognition_action import RecognitionAction
 
 class RecognitionPage(QWidget):
     
-    signal_image_selected = Signal(int)
+    signal_result_checked = Signal(str)
     
     def __init__(self, dataModel):
         super().__init__()
@@ -23,7 +23,8 @@ class RecognitionPage(QWidget):
         self.imagePreviewLabel = QLabel()
         leftLayout.addWidget(self.imagePreviewLabel)
         pixmap = QPixmap(self.dataModel.targetImage)
-        self.imagePreviewLabel.setPixmap(pixmap)
+        scaled_pixmap = pixmap.scaled(400,300)
+        self.imagePreviewLabel.setPixmap(scaled_pixmap)
         
 
         # 中间布局
@@ -41,9 +42,9 @@ class RecognitionPage(QWidget):
         centerLayout.addWidget(self.sbDiffValue)
         
         # 准备校验按钮
-        self.btnOk = QPushButton("确认结果")
-        self.btnOk.clicked.connect(self.checkResult)
-        centerLayout.addWidget(self.btnCheckResult)
+        self.btnOk = QPushButton("确认识别结果")
+        self.btnOk.clicked.connect(self.checkRecogResult)
+        centerLayout.addWidget(self.btnOk)
 
         # 右边布局
         rightLayout = QVBoxLayout()
@@ -66,5 +67,8 @@ class RecognitionPage(QWidget):
         self.recognitionThread.progressUpdated.connect(self.updateProgressDialog)
         self.recognitionThread.finished.connect(self.recognitionFinished)
         self.recognitionThread.start()
-        
+    
+    # 确认识别结果
+    def checkRecogResult(self):
+        self.signal_result_checked.emit(self.dataModel.targetImage)
 

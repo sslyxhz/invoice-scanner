@@ -25,8 +25,6 @@ class MainWindow(QWidget):
         self.current_page = 1
         self.pages = [
             self.index_page,
-            self.page2(),
-            # ... add more pages
         ]
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.pages[0])
@@ -35,30 +33,27 @@ class MainWindow(QWidget):
     def on_image_selected(self, value):
         if(value > 0):
             print("选择完成")
+            for dataModel in self.dataModelMap.values():
+                # Create recognition page
+                recognition_page = RecognitionPage(dataModel)
+                recognition_page.signal_result_checked.connect(self.on_recognition_ok)
+                # Add to pages list
+                self.pages.append(recognition_page)
+            self.nextPage()
         else:
             print("选择失败")
-
-    def page1(self):
-        # ... create UI for page 1
-        next_button = QPushButton("下一步")
-        next_button.clicked.connect(self.nextPage)
-        # ... add other widgets to page 1
-        return QWidget()
-
-    def page2(self):
-        # ... create UI for page 2
-        back_button = QPushButton("返回")
-        back_button.clicked.connect(self.prevPage)
-        next_button = QPushButton("下一步")
-        next_button.clicked.connect(self.nextPage)
-        # ... add other widgets to page 2
-        return QWidget()
+    
+    def on_recognition_ok(self, imagePath):
+        if(imagePath):
+            print('确认识别完成')
 
     def nextPage(self):
+        print('开始跳转下一页')
         self.current_page = (self.current_page + 1) % len(self.pages)
         self.layout().removeWidget(self.pages[self.current_page - 1])
         self.layout().addWidget(self.pages[self.current_page])
         self.layout().update()
+        print('跳转下一页完成')
 
     def prevPage(self):
         self.current_page = (self.current_page - 1) % len(self.pages)
@@ -66,8 +61,7 @@ class MainWindow(QWidget):
         self.layout().addWidget(self.pages[self.current_page])
         self.layout().update()
         
-        
-        
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
