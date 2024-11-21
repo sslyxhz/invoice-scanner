@@ -13,9 +13,6 @@ class RecognitionPage(QWidget):
         self.engine = engine
         self.dataModel = dataModel
         self.initUI()
-
-        # 加载完成后就直接进入识别
-        self.recognizeImage()
     
     def initUI(self):
         pageLayout = QHBoxLayout()  # 创建水平布局
@@ -35,9 +32,9 @@ class RecognitionPage(QWidget):
         centerLayout = QVBoxLayout()
         
         # 识别按钮
-        self.recognizeButton = QPushButton("再次识别")
-        self.recognizeButton.clicked.connect(self.recognizeImage)
-        centerLayout.addWidget(self.recognizeButton)
+        # self.recognizeButton = QPushButton("再次识别")
+        # self.recognizeButton.clicked.connect(self.recognizeImage)
+        # centerLayout.addWidget(self.recognizeButton)
         
         # 阈值设定
         self.sbDiffValue = QSpinBox()
@@ -82,6 +79,15 @@ class RecognitionPage(QWidget):
         pageLayout.addLayout(centerLayout)
         pageLayout.addLayout(rightLayout)
 
+    def loadData(self):
+        # 加载数据
+        if len(self.dataModel.stashResultList) > 0:
+            print("加载识别结果")
+            self.tmpResultList.addItems(self.dataModel.stashResultList)
+            self.updateResultCountLabel()
+        else:
+            print("暂无识别结果")
+
     # 识别图片
     def recognizeImage(self):
         self.loading_dialog = QProgressDialog("正在识别...", "取消", 0, 100, self)
@@ -89,18 +95,14 @@ class RecognitionPage(QWidget):
         self.loading_dialog.show()
         
         self.recognitionThread = RecognitionAction(self.engine, self.dataModel)
-        # self.recognitionThread.progressUpdated.connect(self.updateProgressDialog)
         self.recognitionThread.finished.connect(self.recognitionFinished)
         self.recognitionThread.start()
-    
-    def updateProgressDialog(self, progress):
-        self.loading_dialog.setValue(progress)
 
     def recognitionFinished(self):
         self.loading_dialog.close()
         self.tmpResultList.clear()
         self.tmpResultList.addItems(self.dataModel.stashResultList)
-        self.resultCountLabel.setText(f"识别结果数: {self.dataModel.stashResultList.count()}")
+        self.updateResultCountLabel()
 
     def addStashResult(self):
         text, ok = QInputDialog.getText(self, '添加结果', '请输入新的识别结果:')
