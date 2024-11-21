@@ -109,6 +109,7 @@ class RecognitionPage(QWidget):
         if ok and text:
             self.dataModel.addStashResult(text)
             self.tmpResultList.addItem(text)
+            self.tmpResultList.setCurrentRow(self.tmpResultList.count() - 1)
             self.updateResultCountLabel()
 
     def editdStashResult(self):
