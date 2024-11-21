@@ -1,10 +1,23 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QMessageBox, QSpinBox, QDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QMessageBox, QSpinBox, QDialog, QListWidgetItem
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
 from model.data_model import DataModel
 
-class ResultPage(QWidget):
+class RecogResultItem:
+    def __init__(self, imgIndex, originCode, digitCode, errorGroup):
+        self.imgIndex = imgIndex
+        self.originCode = originCode
+        self.digitCode = digitCode
+        self.errorGroup = errorGroup
     
+    def __str__(self):
+        if len(self.errorGroup) > 0:
+            return f"{self.originCode} {self.errorGroup}"
+        else:
+            return f"{self.originCode}"
+
+class ResultPage(QWidget):
+    signal_pre_step = Signal()
     signal_check_result_done = Signal()
     
     def __init__(self, dataModelMap):
@@ -32,6 +45,11 @@ class ResultPage(QWidget):
         btnCheckResult = QPushButton("检测结果")
         btnCheckResult.clicked.connect(self.checkRecogResult)
         operateBox.addWidget(btnCheckResult)
+
+        # 上一步
+        btnPreStep = QPushButton("上一步")
+        btnPreStep.clicked.connect(self.on_pre_step)
+        operateBox.addWidget(btnPreStep)
 
         # 结束检测
         btnNewRound = QPushButton("新一轮检测")
@@ -68,54 +86,55 @@ class ResultPage(QWidget):
         self.imageList.addItem("All")
         for index, dataModel in self.dataModelMap.items():
             self.imageList.addItem(str(dataModel.index))
-            self.recogResultList.addItems(dataModel.stashResultList)
+
+            for recogResult in dataModel.stashResultList:
+                digitCode = int(recogResult.lstrip('0') or '0')
+                listItemData = RecogResultItem(dataModel.index, recogResult, digitCode, [])
+                listItem = QListWidgetItem(str(listItemData))
+                listItem.setData(Qt.UserRole, listItemData)
+                self.recogResultList.addItem(listItem)
 
     # 检测数据
     def checkRecogResult(self):
         print("checkRecogResult")
-        allResults = []
-        for i in range(self.recogResultList.count()):
-            item = self.recogResultList.item(i)
-            allResults.append(item.text())
-        # allResults.sort()
-
         diffValue = self.sbDiffValue.value()
         if diffValue <= 0:
             QMessageBox.warning(self, "异常", "请设定合理的临界值")
             return
         
         newCodeMap = {}
-        for item in allResults:
-            newCode = item.lstrip('0') or '0'
-            newCodeMap[newCode] = item
-
+        for i in range(self.recogResultList.count()):
+            item = self.recogResultList.item(i)
+            itemData = item.data(Qt.UserRole)
+            # print("get item data: " + str(itemData))
+            newCodeMap[itemData.digitCode] = itemData
+        
         newSortedCodes = sorted(newCodeMap.keys())
         hasError = False
         for i in range(len(newSortedCodes) - 1):
             item1 = newSortedCodes[i]
             item2 = newSortedCodes[i + 1]
 
-            originItem1 = newCodeMap[item1]
-            originItem2 = newCodeMap[item2]
+            originItem1 = newCodeMap[item1].originCode
+            originItem2 = newCodeMap[item2].originCode
             
             # 这里假设item1和item2都是数字，你可以根据实际情况修改
-            if item1.isdigit() and item2.isdigit():
-                diff = abs(int(item1) - int(item2))
-                print(f"比较数值: {item1} 和 {item2}, diff: {diff}")
-                if diff < diffValue:
-                    QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {originItem1} 和 {originItem2}")
-                    
-                    # 为重复的号码添加标记
-                    for ri in range(self.recogResultList.count()):
-                        item = self.recogResultList.item(ri)
-                        if item.text() == originItem1:
-                            item.setText(originItem1 + " *" + str(i))
-                        elif item.text() == originItem2:
-                            item.setText(originItem2 + " *" + str(i))
-                    
-                    hasError = True
-            else:
-                QMessageBox.warning(self, f"识别结果不是数字: {originItem1} 或 {originItem2}")
+            diff = abs(item1 - item2)
+            print(f"比较数值: {item1} 和 {item2}, diff: {diff}")
+            if diff < diffValue:
+                QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {originItem1} 和 {originItem2}")
+                
+                # 为重复的号码添加标记
+                for ri in range(self.recogResultList.count()):
+                    item = self.recogResultList.item(ri)
+                    if item.text() == originItem1:
+                        item.data(Qt.UserRole).errorGroup.append(i)
+                        item.setText(str(item.data(Qt.UserRole)))
+                    elif item.text() == originItem2:
+                        item.data(Qt.UserRole).errorGroup.append(i)
+                        item.setText(str(item.data(Qt.UserRole)))
+                
+                hasError = True
         
         if not hasError:
             QMessageBox.information(self, "校验通过", "未发现异常号码")
@@ -131,15 +150,10 @@ class ResultPage(QWidget):
             for i in range(self.recogResultList.count()):
                 self.recogResultList.item(i).setForeground(Qt.black)
         else:
-            selectedDataModel = None
-            for index, dm in self.dataModelMap.items():
-                if str(dm.index) == text:
-                    selectedDataModel = dm
-                    break
-            
             for i in range(self.recogResultList.count()):
                 item = self.recogResultList.item(i)
-                if item.text() in selectedDataModel.stashResultList:
+                itemData = item.data(Qt.UserRole)
+                if str(itemData.imgIndex) == text:
                     item.setForeground(Qt.red)
                 else:
                     item.setForeground(Qt.black)
@@ -167,3 +181,6 @@ class ResultPage(QWidget):
         label.setPixmap(pixmap)
         dialog.exec_()
         
+    def on_pre_step(self):
+        print("on_pre_step")
+        self.signal_pre_step.emit()

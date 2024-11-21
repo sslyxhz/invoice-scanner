@@ -87,6 +87,7 @@ class MainWindow(QWidget):
             self.pages.append(recognition_page)
         resultPage = ResultPage(self.dataModelMap)
         resultPage.signal_check_result_done.connect(self.newRound)
+        resultPage.signal_pre_step.connect(self.prevPage)
         self.pages.append(resultPage)
 
         # 记载数据
@@ -118,7 +119,6 @@ class MainWindow(QWidget):
         ]
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.pages[0])
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
