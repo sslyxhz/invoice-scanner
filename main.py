@@ -3,148 +3,118 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, Q
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QThread, Signal
 from rapidocr_onnxruntime import RapidOCR
+from model.data_model import DataModel
+from action.recognitions_action import RecognitionsAction
+from ui.index_page import IndexPage
+from ui.recognition_page import RecognitionPage
+from ui.result_page import ResultPage
 
 engine = RapidOCR()
-
-class RecognitionThread(QThread):
-    progressUpdated = Signal(int)
-    finished = Signal()
-
-    def __init__(self, imageList, resultList):
-        super().__init__()
-        self.imageList = imageList
-        self.resultList = resultList
-
-    def run(self):
-        imageListSize = self.imageList.count()
-        for i in range(imageListSize):
-            imgPath = self.imageList.item(i).text()
-            result, elapse = engine(imgPath, use_det=True, use_cls=False, use_rec=True) # 检测+识别
-            texts = [item[1] for item in result]
-            target_text = '号码'
-            for text in texts:
-                if text.startswith(target_text):
-                    # print(text) # 号码：01819689
-                    numbers = ''.join(filter(str.isdigit, text))
-                    print(numbers)
-                    self.resultList.addItem(numbers)
-                    
-            progress = (i + 1) * 100 // imageListSize
-            self.progressUpdated.emit(progress)
-        self.finished.emit()
-
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-
-        self.initUI()
-
-    def initUI(self):
+        
+        self.setWindowTitle("图片识别")
         self.setGeometry(100, 100, 1000, 800)
-
-        # 左边布局
-        leftLayout = QVBoxLayout()
-        self.imageCountLabel = QLabel("图片数量: 0")
-        leftLayout.addWidget(self.imageCountLabel)
-        self.imageList = QListWidget()
-        leftLayout.addWidget(self.imageList)
-
-        # 中间布局
-        centerLayout = QVBoxLayout()
-        self.uploadButton = QPushButton("上传图片")
-        centerLayout.addWidget(self.uploadButton)
-        self.uploadButton.clicked.connect(self.uploadImage)
+        self.current_page_index = 0
         
-        self.recognizeButton = QPushButton("识别")
-        centerLayout.addWidget(self.recognizeButton)
-        self.recognizeButton.clicked.connect(self.recognizeImage)
+        self.newRound()
+
+
+    def on_image_selected(self, value):
+        if(value > 0):
+            print("选择完成")
+
+            # 直接执行识别任务
+            self.recognizeImage()
+        else:
+            print("选择失败")
+    
+    def on_recognition_ok(self, modelIndex):
+        print(f"确认识别完成 image: {modelIndex}")
+        self.nextPage()
+
+    def nextPage(self):
+        print('开始跳转下一页')
+        # self.current_page_index = (self.current_page_index + 1) % len(self.pages)
+        self.current_page_index = self.current_page_index + 1
+        self.pages[self.current_page_index - 1].hide()
+        self.layout().removeWidget(self.pages[self.current_page_index - 1])
+        self.layout().addWidget(self.pages[self.current_page_index])
+        self.layout().update()
+        print('跳转下一页完成 cur page index: ', self.current_page_index)
+
+    def prevPage(self):
+        print('开始跳转上一页')
+        # self.current_page_index = (self.current_page_index - 1) % len(self.pages)
+        self.current_page_index = self.current_page_index - 1
+        self.pages[self.current_page_index + 1].hide()
+        self.layout().removeWidget(self.pages[self.current_page_index + 1])
+        self.layout().addWidget(self.pages[self.current_page_index])
+        self.layout().update()
+        print('跳转上一页完成 cur page index: ', self.current_page_index)
         
-        self.sbDiffValue = QSpinBox()
-        self.sbDiffValue.setRange(1, 5000)
-        self.sbDiffValue.setValue(100)
-        centerLayout.addWidget(self.sbDiffValue)
-        
-        self.btnCheckResult = QPushButton("校验")
-        centerLayout.addWidget(self.btnCheckResult)
-        self.btnCheckResult.clicked.connect(self.checkResult)
-        
-        self.btnClean = QPushButton("清除")
-        centerLayout.addWidget(self.btnClean)
-        self.btnClean.clicked.connect(self.cleanAll)
 
-        # 右边布局
-        rightLayout = QVBoxLayout()
-        self.resultCountLabel = QLabel("识别数量: 0")
-        rightLayout.addWidget(self.resultCountLabel)
-        self.resultList = QListWidget()
-        rightLayout.addWidget(self.resultList)
-
-        # 主布局
-        mainLayout = QHBoxLayout()
-        mainLayout.addLayout(leftLayout)
-        mainLayout.addLayout(centerLayout)
-        mainLayout.addLayout(rightLayout)
-
-        self.setLayout(mainLayout)
-
-
-    def uploadImage(self):
-        filePaths, _ = QFileDialog.getOpenFileNames(self, "选择图片", "", "图片文件 (*.jpg *.png *.bmp)")
-        if filePaths:
-            for filePath in filePaths:
-                self.imageList.addItem(filePath)
-            self.imageCountLabel.setText(f"图片数量: {self.imageList.count()}")
-            
-
+    # 识别图片
     def recognizeImage(self):
         self.loading_dialog = QProgressDialog("正在识别...", "取消", 0, 100, self)
         self.loading_dialog.setWindowModality(Qt.WindowModal)
         self.loading_dialog.show()
         
-        self.recognitionThread = RecognitionThread(self.imageList, self.resultList)
+        self.recognitionThread = RecognitionsAction(engine, self.dataModelMap)
         self.recognitionThread.progressUpdated.connect(self.updateProgressDialog)
-        self.recognitionThread.finished.connect(self.recognitionFinished)
+        self.recognitionThread.batchFinished.connect(self.recognitionFinished)
         self.recognitionThread.start()
-        
-        
-    def checkResult(self):
-        diffValue = self.sbDiffValue.value()
-        if diffValue<=0:
-            QMessageBox.warning(self, "异常", "请设定合理的临界值")
-            return
-        
-        for i in range(self.resultList.count() - 1):
-            item1 = self.resultList.item(i).text()
-            item2 = self.resultList.item(i + 1).text()
-            
-            # 这里假设item1和item2都是数字，你可以根据实际情况修改
-            if item1.isdigit() and item2.isdigit():
-                diff = abs(int(item1) - int(item2))
-                if diff < 100:
-                    QMessageBox.warning(self, "错误", f"发现相邻号码差值小于100, 号码: {item1} 和 {item2}")
-                    return
-            else:
-                QMessageBox.warning(self, f"识别结果不是数字: {item1} 或 {item2}")
-        
-        QMessageBox.information(self, "校验通过", "未发现异常号码")
-        
-        
+
     def updateProgressDialog(self, progress):
+        print("更新进度", progress)
         self.loading_dialog.setValue(progress)
-        
-        
+
     def recognitionFinished(self):
+        print("完成批量识别")
         self.loading_dialog.close()
-        self.resultCountLabel.setText(f"识别数量: {self.resultList.count()}")
-        self.resultList.sortItems()
+
+        print("加载页面")
+        for dataModel in self.dataModelMap.values():
+            # Create recognition page
+            recognition_page = RecognitionPage(engine, dataModel)
+            recognition_page.signal_result_checked.connect(self.on_recognition_ok)
+            # Add to pages list
+            self.pages.append(recognition_page)
+        resultPage = ResultPage(self.dataModelMap)
+        resultPage.signal_check_result_done.connect(self.newRound)
+        self.pages.append(resultPage)
+
+        # 记载数据
+        for page in self.pages:
+            if isinstance(page, RecognitionPage):
+                page.loadData()
+
+        # 跳转下一页
+        self.nextPage()
+
+    # 新一轮检测
+    def newRound(self):
+        print("newRound...")
+
+        if self.current_page_index > 0:
+            self.pages[self.current_page_index].hide()
+            self.layout().removeWidget(self.pages[self.current_page_index])
         
+        self.dataModelMap = {}
         
-    def cleanAll(self):
-        self.imageList.clear()
-        self.resultList.clear()
-        self.imageCountLabel.setText(f"图片数量: {self.imageList.count()}")
-        self.resultCountLabel.setText(f"识别数量: {self.resultList.count()}")
+        # 首页, 引导
+        self.index_page = IndexPage(self.dataModelMap)
+        self.index_page.signal_image_selected.connect(self.on_image_selected)
+        
+        # 加载首页
+        self.current_page_index = 0
+        self.pages = [
+            self.index_page,
+        ]
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self.pages[0])
 
 
 if __name__ == "__main__":
