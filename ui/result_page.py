@@ -94,12 +94,19 @@ class ResultPage(QWidget):
             QMessageBox.warning(self, "异常", "请设定合理的临界值")
             return
         
-        for i in range(len(allResults) - 1):
-            originItem1 = allResults[i]
-            originItem2 = allResults[i + 1]
+        newCodeMap = {}
+        for item in allResults:
+            newCode = item.lstrip('0') or '0'
+            newCodeMap[newCode] = item
 
-            item1 = originItem1.lstrip('0') or '0'
-            item2 = originItem2.lstrip('0') or '0'
+        newSortedCodes = sorted(newCodeMap.keys())
+        hasError = False
+        for i in range(len(newSortedCodes) - 1):
+            item1 = newSortedCodes[i]
+            item2 = newSortedCodes[i + 1]
+
+            originItem1 = newCodeMap[item1]
+            originItem2 = newCodeMap[item2]
             
             # 这里假设item1和item2都是数字，你可以根据实际情况修改
             if item1.isdigit() and item2.isdigit():
@@ -110,10 +117,12 @@ class ResultPage(QWidget):
                     self.errorResultList.addItem(originItem1)
                     self.errorResultList.addItem(originItem2)
                     self.errorResultList.addItem("-------")
+                    hasError = True
             else:
                 QMessageBox.warning(self, f"识别结果不是数字: {originItem1} 或 {originItem2}")
         
-        QMessageBox.information(self, "校验通过", "未发现异常号码")
+        if not hasError:
+            QMessageBox.information(self, "校验通过", "未发现异常号码")
 
 
     def newRound(self):
