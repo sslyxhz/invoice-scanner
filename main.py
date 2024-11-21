@@ -15,22 +15,11 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.dataModelMap = {}
-        
         self.setWindowTitle("图片识别")
         self.setGeometry(100, 100, 1000, 800)
-        
-        # 首页, 引导
-        self.index_page = IndexPage(self.dataModelMap)
-        self.index_page.signal_image_selected.connect(self.on_image_selected)
-        
-        # 加载首页
         self.current_page_index = 0
-        self.pages = [
-            self.index_page,
-        ]
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.pages[0])
+        
+        self.newRound()
 
 
     def on_image_selected(self, value):
@@ -39,41 +28,32 @@ class MainWindow(QWidget):
 
             # 直接执行识别任务
             self.recognizeImage()
-
-            print("加载页面")
-            for dataModel in self.dataModelMap.values():
-                # Create recognition page
-                recognition_page = RecognitionPage(engine, dataModel)
-                recognition_page.signal_result_checked.connect(self.on_recognition_ok)
-                # Add to pages list
-                self.pages.append(recognition_page)
-            resultPage = ResultPage(self.dataModelMap)
-            self.pages.append(resultPage)
-            # self.nextPage()
         else:
             print("选择失败")
     
     def on_recognition_ok(self, modelIndex):
-        print('确认识别完成 image: ', modelIndex)
+        print(f"确认识别完成 image: {modelIndex}")
         self.nextPage()
 
     def nextPage(self):
         print('开始跳转下一页')
-        self.current_page_index = (self.current_page_index + 1) % len(self.pages)
+        # self.current_page_index = (self.current_page_index + 1) % len(self.pages)
+        self.current_page_index = self.current_page_index + 1
         self.pages[self.current_page_index - 1].hide()
         self.layout().removeWidget(self.pages[self.current_page_index - 1])
         self.layout().addWidget(self.pages[self.current_page_index])
         self.layout().update()
-        print('跳转下一页完成')
+        print('跳转下一页完成 cur page index: ', self.current_page_index)
 
     def prevPage(self):
         print('开始跳转上一页')
-        self.current_page_index = (self.current_page_index - 1) % len(self.pages)
+        # self.current_page_index = (self.current_page_index - 1) % len(self.pages)
+        self.current_page_index = self.current_page_index - 1
         self.pages[self.current_page_index + 1].hide()
         self.layout().removeWidget(self.pages[self.current_page_index + 1])
         self.layout().addWidget(self.pages[self.current_page_index])
         self.layout().update()
-        print('跳转上一页完成')
+        print('跳转上一页完成 cur page index: ', self.current_page_index)
         
 
     # 识别图片
@@ -95,6 +75,17 @@ class MainWindow(QWidget):
         print("完成批量识别")
         self.loading_dialog.close()
 
+        print("加载页面")
+        for dataModel in self.dataModelMap.values():
+            # Create recognition page
+            recognition_page = RecognitionPage(engine, dataModel)
+            recognition_page.signal_result_checked.connect(self.on_recognition_ok)
+            # Add to pages list
+            self.pages.append(recognition_page)
+        resultPage = ResultPage(self.dataModelMap)
+        resultPage.signal_check_result_done.connect(self.newRound)
+        self.pages.append(resultPage)
+
         # 记载数据
         for page in self.pages:
             if isinstance(page, RecognitionPage):
@@ -102,6 +93,28 @@ class MainWindow(QWidget):
 
         # 跳转下一页
         self.nextPage()
+
+    # 新一轮检测
+    def newRound(self):
+        print("newRound...")
+
+        if self.current_page_index > 0:
+            self.pages[self.current_page_index].hide()
+            self.layout().removeWidget(self.pages[self.current_page_index])
+        
+        self.dataModelMap = {}
+        
+        # 首页, 引导
+        self.index_page = IndexPage(self.dataModelMap)
+        self.index_page.signal_image_selected.connect(self.on_image_selected)
+        
+        # 加载首页
+        self.current_page_index = 0
+        self.pages = [
+            self.index_page,
+        ]
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self.pages[0])
 
 
 if __name__ == "__main__":

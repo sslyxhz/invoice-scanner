@@ -125,6 +125,7 @@ class RecognitionPage(QWidget):
             self.dataModel.editStashResult(text, new_text)
             self.tmpResultList.takeItem(row)
             self.tmpResultList.insertItem(row, new_text)
+            self.tmpResultList.setCurrentRow(row)
             self.updateResultCountLabel()
 
     def delStashResult(self):
@@ -144,5 +145,5 @@ class RecognitionPage(QWidget):
 
     # 确认识别结果
     def checkRecogResult(self):
-        self.signal_result_checked.emit(self.dataModel.index)
+        self.signal_result_checked.emit(str(self.dataModel.index))
 
