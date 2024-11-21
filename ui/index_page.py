@@ -23,10 +23,8 @@ class IndexPage(QWidget):
     def select_image(self):
         filePaths, _ = QFileDialog.getOpenFileNames(self, "选择图片", "", "图片文件 (*.jpg *.png *.bmp)")
         if filePaths:
-            for filePath in filePaths:
-                # self.dataModel.addImage(filePath)
-                self.dataModelMap[filePath] = DataModel(filePath)
-            # self.imageCountLabel.setText(f"图片数量: {self.imageList.count()}")
+            for index, filePath in enumerate(filePaths):
+                self.dataModelMap[index] = DataModel(index, filePath)
             self.signal_image_selected.emit(1)
         else:
             self.signal_image_selected.emit(0)

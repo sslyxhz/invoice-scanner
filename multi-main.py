@@ -3,9 +3,10 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, Q
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QThread, Signal
 from rapidocr_onnxruntime import RapidOCR
+from model.data_model import DataModel
 from ui.index_page import IndexPage
 from ui.recognition_page import RecognitionPage
-from model.data_model import DataModel
+from ui.result_page import ResultPage
 
 engine = RapidOCR()
 
@@ -22,7 +23,8 @@ class MainWindow(QWidget):
         self.index_page = IndexPage(self.dataModelMap)
         self.index_page.signal_image_selected.connect(self.on_image_selected)
         
-        self.current_page = 0
+        # 加载首页
+        self.current_page_index = 0
         self.pages = [
             self.index_page,
         ]
@@ -35,30 +37,34 @@ class MainWindow(QWidget):
             print("选择完成")
             for dataModel in self.dataModelMap.values():
                 # Create recognition page
-                recognition_page = RecognitionPage(dataModel)
+                recognition_page = RecognitionPage(engine, dataModel)
                 recognition_page.signal_result_checked.connect(self.on_recognition_ok)
                 # Add to pages list
                 self.pages.append(recognition_page)
+            resultPage = ResultPage(self.dataModelMap)
+            self.pages.append(resultPage)
             self.nextPage()
         else:
             print("选择失败")
     
-    def on_recognition_ok(self, imagePath):
-        if(imagePath):
-            print('确认识别完成')
+    def on_recognition_ok(self, modelIndex):
+        print('确认识别完成 image: ', modelIndex)
+        self.nextPage()
 
     def nextPage(self):
         print('开始跳转下一页')
-        self.current_page = (self.current_page + 1) % len(self.pages)
-        self.layout().removeWidget(self.pages[self.current_page - 1])
-        self.layout().addWidget(self.pages[self.current_page])
+        self.current_page_index = (self.current_page_index + 1) % len(self.pages)
+        self.pages[self.current_page_index - 1].hide()
+        self.layout().removeWidget(self.pages[self.current_page_index - 1])
+        self.layout().addWidget(self.pages[self.current_page_index])
         self.layout().update()
         print('跳转下一页完成')
 
     def prevPage(self):
-        self.current_page = (self.current_page - 1) % len(self.pages)
-        self.layout().removeWidget(self.pages[self.current_page + 1])
-        self.layout().addWidget(self.pages[self.current_page])
+        self.current_page_index = (self.current_page_index - 1) % len(self.pages)
+        self.pages[self.current_page_index + 1].hide()
+        self.layout().removeWidget(self.pages[self.current_page_index + 1])
+        self.layout().addWidget(self.pages[self.current_page_index])
         self.layout().update()
         
 

@@ -2,9 +2,12 @@
 # 一张图的关联的数据
 class DataModel:
     
-    def __init__(self, targetImage):
+    def __init__(self, index, targetImage):
         super().__init__()
         
+        # 图片序号
+        self.index = index
+
         # 图片列表
         self.targetImage = targetImage
         
@@ -22,7 +25,7 @@ class DataModel:
             if resultItem == oldResult:
                 self.imageList[i] = newResult
 
-    def delStashResult(self, delItem):
+    def removeStashResult(self, delItem):
         self.stashResultList.remove(delItem)
         
     def addFinalResult(self, inputResultList):
