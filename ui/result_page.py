@@ -91,12 +91,13 @@ class ResultPage(QWidget):
             return
         
         for i in range(len(allResults) - 1):
-            item1 = allResults.item(i).text()
-            item2 = allResults.item(i + 1).text()
+            item1 = allResults[i]
+            item2 = allResults[i + 1]
             
             # 这里假设item1和item2都是数字，你可以根据实际情况修改
             if item1.isdigit() and item2.isdigit():
                 diff = abs(int(item1) - int(item2))
+                print(f"比较数值: {item1} 和 {item2}, diff: {diff}")
                 if diff < diffValue:
                     QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {item1} 和 {item2}")
                     self.errorResultList.addItem(item1)
@@ -137,4 +138,20 @@ class ResultPage(QWidget):
             return
         
         print("on_error_item_selected: " + text)
+        targetDataModel = None
+        for itemDataModel in self.dataModelMap.values():
+            if text in itemDataModel.stashResultList:
+                print("itemDataModel.index: " + str(itemDataModel.index))
+                targetDataModel = itemDataModel
+                break
+
+        print("弹出一个窗口展示图片")
+        dialog = QDialog(self)
+        dialog.resize(800, 600)
+        layout = QVBoxLayout(dialog)
+        label = QLabel(dialog)
+        layout.addWidget(label)
+        pixmap = QPixmap(targetDataModel.targetImage)
+        label.setPixmap(pixmap)
+        dialog.exec_()
         
