@@ -107,6 +107,7 @@ class RecognitionPage(QWidget):
     def addStashResult(self):
         text, ok = QInputDialog.getText(self, '添加结果', '请输入新的识别结果:')
         if ok and text:
+            print('添加数据: ' + text)
             self.dataModel.addStashResult(text)
             self.tmpResultList.addItem(text)
             self.tmpResultList.setCurrentRow(self.tmpResultList.count() - 1)

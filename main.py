@@ -45,6 +45,9 @@ class MainWindow(QWidget):
         self.layout().update()
         print('跳转下一页完成 cur page index: ', self.current_page_index)
 
+        if isinstance(self.pages[self.current_page_index], ResultPage):
+            self.pages[self.current_page_index].loadData()
+
     def prevPage(self):
         print('开始跳转上一页')
         # self.current_page_index = (self.current_page_index - 1) % len(self.pages)

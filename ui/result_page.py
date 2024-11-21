@@ -71,6 +71,10 @@ class ResultPage(QWidget):
     # 加载数据
     def loadData(self):
         print("加载数据")
+        self.imageList.clear()
+        self.recogResultList.clear()
+        self.errorResultList.clear()
+
         self.imageList.addItem("All")
         for index, dataModel in self.dataModelMap.items():
             self.imageList.addItem(str(dataModel.index))
@@ -91,20 +95,23 @@ class ResultPage(QWidget):
             return
         
         for i in range(len(allResults) - 1):
-            item1 = allResults[i]
-            item2 = allResults[i + 1]
+            originItem1 = allResults[i]
+            originItem2 = allResults[i + 1]
+
+            item1 = originItem1.lstrip('0') or '0'
+            item2 = originItem2.lstrip('0') or '0'
             
             # 这里假设item1和item2都是数字，你可以根据实际情况修改
             if item1.isdigit() and item2.isdigit():
                 diff = abs(int(item1) - int(item2))
                 print(f"比较数值: {item1} 和 {item2}, diff: {diff}")
                 if diff < diffValue:
-                    QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {item1} 和 {item2}")
-                    self.errorResultList.addItem(item1)
-                    self.errorResultList.addItem(item2)
+                    QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {originItem1} 和 {originItem2}")
+                    self.errorResultList.addItem(originItem1)
+                    self.errorResultList.addItem(originItem2)
                     self.errorResultList.addItem("-------")
             else:
-                QMessageBox.warning(self, f"识别结果不是数字: {item1} 或 {item2}")
+                QMessageBox.warning(self, f"识别结果不是数字: {originItem1} 或 {originItem2}")
         
         QMessageBox.information(self, "校验通过", "未发现异常号码")
 
