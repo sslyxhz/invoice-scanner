@@ -36,11 +36,6 @@ class RecognitionPage(QWidget):
         # self.recognizeButton.clicked.connect(self.recognizeImage)
         # centerLayout.addWidget(self.recognizeButton)
         
-        # 阈值设定
-        self.sbDiffValue = QSpinBox()
-        self.sbDiffValue.setRange(1, 5000)
-        self.sbDiffValue.setValue(100)
-        centerLayout.addWidget(self.sbDiffValue)
         
         # 准备校验按钮
         self.btnOk = QPushButton("确认识别结果")

@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QFileDialog, QProgressDialog, QMessageBox, QSpinBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QMessageBox, QSpinBox, QDialog
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, Signal
 from model.data_model import DataModel
 
 class ResultPage(QWidget):
@@ -14,66 +14,56 @@ class ResultPage(QWidget):
         self.loadData()
     
     def initUI(self):
-        pageLayout = QHBoxLayout()  # 创建水平布局
+        pageLayout = QVBoxLayout()  # 创建水平布局
         self.setLayout(pageLayout) 
+
+        operateBox = QHBoxLayout()
+        # 临界值标签
+        criticalValueLabel = QLabel("临界值:") 
+        operateBox.addWidget(criticalValueLabel)
+
+        # 阈值设定
+        self.sbDiffValue = QSpinBox()
+        self.sbDiffValue.setRange(1, 5000)
+        self.sbDiffValue.setValue(50)
+        operateBox.addWidget(self.sbDiffValue)
+
+        # 开始检测
+        btnCheckResult = QPushButton("检测结果")
+        btnCheckResult.clicked.connect(self.checkRecogResult)
+        operateBox.addWidget(btnCheckResult)
+
+        # 结束检测
+        btnNewRound = QPushButton("新一轮检测")
+        btnNewRound.clicked.connect(self.newRound)
+        operateBox.addWidget(btnNewRound)
+
+        pageLayout.addLayout(operateBox)
+
+        contentLayout = QHBoxLayout()
+        pageLayout.addLayout(contentLayout)
         
         # 左边布局 - 图片列表
         leftLayout = QVBoxLayout()
+        contentLayout.addLayout(leftLayout)
         
         self.imageList = QListWidget()
         self.imageList.currentTextChanged.connect(self.on_image_selected)
         leftLayout.addWidget(self.imageList)
         
-        # 中间布局 - 识别结果
-        centerLayout = QVBoxLayout()
+        # 右边布局 - 识别结果
+        rightLayout = QVBoxLayout()
+        contentLayout.addLayout(rightLayout)
 
         self.recogResultList = QListWidget()
-        centerLayout.addWidget(self.recogResultList)
-        
-        # 右边布局 - 检测异常
-        rightLayout = QVBoxLayout()
+        rightLayout.addWidget(self.recogResultList)
 
-        # 操作
-        self.operateBox = QHBoxLayout()
-
-        # 临界值标签
-        self.criticalValueLabel = QLabel("临界值:") 
-        self.operateBox.addWidget(self.criticalValueLabel)
-
-        # 阈值设定
-        self.sbDiffValue = QSpinBox()
-        self.sbDiffValue.setRange(1, 5000)
-        self.sbDiffValue.setValue(100)
-        self.operateBox.addWidget(self.sbDiffValue)
-
-        # 开始检测
-        self.btnCheckResult = QPushButton("检测结果")
-        self.operateBox.addWidget(self.btnCheckResult)
-        self.btnCheckResult.clicked.connect(self.checkRecogResult)
-
-        # 结束检测
-        self.btnNewRound = QPushButton("新一轮检测")
-        self.btnNewRound.clicked.connect(self.newRound)
-        self.operateBox.addWidget(self.btnNewRound)
-
-        rightLayout.addLayout(self.operateBox)
-        
-        # 右边布局 - 列表
-        self.errorResultList = QListWidget()
-        self.errorResultList.currentTextChanged.connect(self.on_error_item_selected)
-        rightLayout.addWidget(self.errorResultList)
-
-        # 主布局
-        pageLayout.addLayout(leftLayout)
-        pageLayout.addLayout(centerLayout)
-        pageLayout.addLayout(rightLayout)
 
     # 加载数据
     def loadData(self):
         print("加载数据")
         self.imageList.clear()
         self.recogResultList.clear()
-        self.errorResultList.clear()
 
         self.imageList.addItem("All")
         for index, dataModel in self.dataModelMap.items():
@@ -87,7 +77,7 @@ class ResultPage(QWidget):
         for i in range(self.recogResultList.count()):
             item = self.recogResultList.item(i)
             allResults.append(item.text())
-        allResults.sort()
+        # allResults.sort()
 
         diffValue = self.sbDiffValue.value()
         if diffValue <= 0:
@@ -114,9 +104,15 @@ class ResultPage(QWidget):
                 print(f"比较数值: {item1} 和 {item2}, diff: {diff}")
                 if diff < diffValue:
                     QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {originItem1} 和 {originItem2}")
-                    self.errorResultList.addItem(originItem1)
-                    self.errorResultList.addItem(originItem2)
-                    self.errorResultList.addItem("-------")
+                    
+                    # 为重复的号码添加标记
+                    for ri in range(self.recogResultList.count()):
+                        item = self.recogResultList.item(ri)
+                        if item.text() == originItem1:
+                            item.setText(originItem1 + " *" + str(i))
+                        elif item.text() == originItem2:
+                            item.setText(originItem2 + " *" + str(i))
+                    
                     hasError = True
             else:
                 QMessageBox.warning(self, f"识别结果不是数字: {originItem1} 或 {originItem2}")
