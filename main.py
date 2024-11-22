@@ -36,27 +36,32 @@ class MainWindow(QWidget):
         self.nextPage()
 
     def nextPage(self):
-        print('开始跳转下一页')
-        # self.current_page_index = (self.current_page_index + 1) % len(self.pages)
+        print('跳转下一页 - 开始 cur page index: ', self.current_page_index)
+        self.pages[self.current_page_index].hide()
+        self.layout().removeWidget(self.pages[self.current_page_index])
+        
         self.current_page_index = self.current_page_index + 1
-        self.pages[self.current_page_index - 1].hide()
-        self.layout().removeWidget(self.pages[self.current_page_index - 1])
+
         self.layout().addWidget(self.pages[self.current_page_index])
+        self.pages[self.current_page_index].show()
         self.layout().update()
-        print('跳转下一页完成 cur page index: ', self.current_page_index)
+        print('跳转下一页 - 完成 cur page index: ', self.current_page_index)
 
         if isinstance(self.pages[self.current_page_index], ResultPage):
             self.pages[self.current_page_index].loadData()
 
     def prevPage(self):
-        print('开始跳转上一页')
-        # self.current_page_index = (self.current_page_index - 1) % len(self.pages)
+        print('跳转上一页 - 开始, cur page index: ', self.current_page_index)
+        
+        self.pages[self.current_page_index].hide()
+        self.layout().removeWidget(self.pages[self.current_page_index])
+        
         self.current_page_index = self.current_page_index - 1
-        self.pages[self.current_page_index + 1].hide()
-        self.layout().removeWidget(self.pages[self.current_page_index + 1])
+
         self.layout().addWidget(self.pages[self.current_page_index])
+        self.pages[self.current_page_index].show()
         self.layout().update()
-        print('跳转上一页完成 cur page index: ', self.current_page_index)
+        print('跳转上一页 - 完成, cur page index: ', self.current_page_index)
         
 
     # 识别图片
@@ -83,6 +88,7 @@ class MainWindow(QWidget):
             # Create recognition page
             recognition_page = RecognitionPage(engine, dataModel)
             recognition_page.signal_result_checked.connect(self.on_recognition_ok)
+            recognition_page.signal_pre_step.connect(self.prevPage)
             # Add to pages list
             self.pages.append(recognition_page)
         resultPage = ResultPage(self.dataModelMap)

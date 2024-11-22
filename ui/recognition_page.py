@@ -5,7 +5,7 @@ from model.data_model import DataModel
 from action.recognition_action import RecognitionAction
 
 class RecognitionPage(QWidget):
-    
+    signal_pre_step = Signal()
     signal_result_checked = Signal(str)
     
     def __init__(self, engine, dataModel):
@@ -36,9 +36,12 @@ class RecognitionPage(QWidget):
         # self.recognizeButton.clicked.connect(self.recognizeImage)
         # centerLayout.addWidget(self.recognizeButton)
         
+        self.btnPreStep = QPushButton("上一步")
+        self.btnPreStep.clicked.connect(self.on_pre_step)
+        centerLayout.addWidget(self.btnPreStep)
         
         # 准备校验按钮
-        self.btnOk = QPushButton("确认识别结果")
+        self.btnOk = QPushButton("下一步")
         self.btnOk.clicked.connect(self.checkRecogResult)
         centerLayout.addWidget(self.btnOk)
 
@@ -143,3 +146,5 @@ class RecognitionPage(QWidget):
     def checkRecogResult(self):
         self.signal_result_checked.emit(str(self.dataModel.index))
 
+    def on_pre_step(self):
+        self.signal_pre_step.emit()
