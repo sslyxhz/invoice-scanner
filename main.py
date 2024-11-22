@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QFileDialog, QProgressDialog, QMessageBox, QSpinBox
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtCore import Qt, QThread, Signal
 from rapidocr_onnxruntime import RapidOCR
 from model.data_model import DataModel
@@ -124,8 +124,13 @@ class MainWindow(QWidget):
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.pages[0])
 
+global_font = QFont()
+global_font.setPointSize(18)  # 设置全局字体大小
+global_font.setBold(True)      # 设置全局字体加粗
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setFont(global_font)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

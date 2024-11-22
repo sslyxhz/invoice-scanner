@@ -1,7 +1,7 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QMessageBox, QSpinBox, QDialog, QListWidgetItem
-from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QMessageBox, QSpinBox, QListWidgetItem
 from PySide6.QtCore import Qt, Signal
 from model.data_model import DataModel
+import re
 
 class RecogResultItem:
     def __init__(self, imgIndex, originCode, digitCode, errorGroup):
@@ -85,7 +85,7 @@ class ResultPage(QWidget):
 
         self.imageList.addItem("All")
         for index, dataModel in self.dataModelMap.items():
-            self.imageList.addItem(str(dataModel.index))
+            self.imageList.addItem(f"第{dataModel.index + 1}张")
 
             for recogResult in dataModel.stashResultList:
                 digitCode = int(recogResult.lstrip('0') or '0')
@@ -167,13 +167,23 @@ class ResultPage(QWidget):
             for i in range(self.recogResultList.count()):
                 self.recogResultList.item(i).setForeground(Qt.black)
         else:
+            realIndex = self.extract_real_index(text)
             for i in range(self.recogResultList.count()):
                 item = self.recogResultList.item(i)
                 itemData = item.data(Qt.UserRole)
-                if str(itemData.imgIndex) == text:
+                if itemData.imgIndex == realIndex:
                     item.setForeground(Qt.red)
                 else:
                     item.setForeground(Qt.black)
+
+    def extract_real_index(self, text):
+        match = re.search(r'\d+', text)  # 查找数字
+        if match:
+            value = int(match.group())  # 提取并转换为整数
+            return value - 1
+        else:
+            print("未找到数字")
+            return -1
         
     
     def on_pre_step(self):
