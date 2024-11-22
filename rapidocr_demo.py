@@ -18,7 +18,8 @@ def get_text_position(item, image_height):
 
 engine = RapidOCR()
 
-img_path = './imgs/test2.jpg'
+# img_path = './imgs/test2.jpg'
+img_path = './imgs/WechatIMG29815.jpg'
 # 使用前先获取图片高度
 img = Image.open(img_path)
 img_height = img.height
@@ -33,14 +34,20 @@ result, elapse = engine(img_path, use_det=True, use_cls=False, use_rec=True) # �
 sorted_result = sorted(result, key=lambda item: get_text_position(item, img_height))
 
 texts = [item[1] for item in sorted_result]
-# print(texts)
+print(texts)
 
-target_text = '号码'
 for text in texts:
-    if text.startswith(target_text):
+    if text.startswith('号码') or text.startswith('母码') or text.startswith('务码') or text.startswith('粤码'):
         # print(text) # 号码：01819689
         numbers = ''.join(filter(str.isdigit, text))
         print(numbers)
+    elif text.__contains__('号码'):
+        # 代码：135022422881代码：135022322881号码：00213347 提取出号码  
+        start_index = text.find('号码：')
+        if start_index != -1:
+            number = text[start_index + 3:]
+            print('>>>', number)
+        
 
 
 # 检测texts中符合 x年x月x日格式、2022-12-12格式的文本

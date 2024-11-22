@@ -44,13 +44,32 @@ class RecognitionsAction(QThread):
             sorted_result = sorted(result, key=lambda item: get_text_position(item, img_height))
 
             texts = [item[1] for item in sorted_result]
-            target_text = '号码'
             for text in texts:
-                if text.startswith(target_text):
+                if text.startswith('号码') or text.startswith('母码') or text.startswith('务码') or text.startswith('粤码'):
                     # print(text) # 号码：01819689
                     numbers = ''.join(filter(str.isdigit, text))
                     # print(numbers)
                     dataModel.addStashResult(numbers)
+                elif text.__contains__('号码'):
+                    start_index = text.find('号码：')
+                    if start_index != -1:
+                        number = text[start_index + 3:]
+                        dataModel.addStashResult(numbers)
+                elif text.__contains__('母码'):
+                    start_index = text.find('母码：')
+                    if start_index != -1:
+                        number = text[start_index + 3:]
+                        dataModel.addStashResult(numbers)
+                elif text.__contains__('务码'):
+                    start_index = text.find('务码：')
+                    if start_index != -1:
+                        number = text[start_index + 3:]
+                        dataModel.addStashResult(numbers)
+                elif text.__contains__('粤码'):
+                    start_index = text.find('粤码：')
+                    if start_index != -1:
+                        number = text[start_index + 3:]
+                        dataModel.addStashResult(numbers)
  
             progress = (index + 1) * 100 // imageCount
             self.progressUpdated.emit(progress)
