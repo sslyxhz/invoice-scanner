@@ -110,32 +110,49 @@ class ResultPage(QWidget):
             newCodeMap[itemData.digitCode] = itemData
         
         newSortedCodes = sorted(newCodeMap.keys())
+        
+        # 找出多组数据，每组数据特征为相邻数字差值小于100
+        allErrorGroups = {} # groupNo, [item1, item2, ...]
+        errorGroupIndex = 1
+        codesCount = len(newSortedCodes)
         hasError = False
-        for i in range(len(newSortedCodes) - 1):
-            item1 = newSortedCodes[i]
-            item2 = newSortedCodes[i + 1]
+        for i in range(codesCount - 1):
+            curItem = newSortedCodes[i]
+            curItemOriginCode = newCodeMap[curItem].originCode
+            curGourp = []
 
-            originItem1 = newCodeMap[item1].originCode
-            originItem2 = newCodeMap[item2].originCode
+            breakIndex = i + 1
+            for j in range(i + 1, codesCount):
+                compareItem = newSortedCodes[j]
+                compareItemOriginCode = newCodeMap[compareItem].originCode
+                diff = abs(compareItem - curItem)
+                print(f"比较数值: {curItem} 和 {compareItem}, diff: {diff}")
+                if diff < diffValue:
+                    if len(curGourp) == 0:
+                        curGourp.append(curItem)
+                    curGourp.append(compareItem)
+                    QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {curItemOriginCode} 和 {compareItemOriginCode}")
+                    continue # 继续找
+                else:
+                    # 已经没有连续
+                    breakIndex = j
+                    break
             
-            # 这里假设item1和item2都是数字，你可以根据实际情况修改
-            diff = abs(item1 - item2)
-            print(f"比较数值: {item1} 和 {item2}, diff: {diff}")
-            if diff < diffValue:
-                QMessageBox.warning(self, "错误", f"发现相邻号码差值小于{diffValue}, 号码: {originItem1} 和 {originItem2}")
-                
-                # 为重复的号码添加标记
+            if len(curGourp) > 0:
+                allErrorGroups[errorGroupIndex] = curGourp
+                hasError = True
+                i = breakIndex # 跳过已识别数值
+
+                # 为重复的号码添加错误组号
                 for ri in range(self.recogResultList.count()):
                     item = self.recogResultList.item(ri)
-                    if item.text() == originItem1:
-                        item.data(Qt.UserRole).errorGroup.append(i)
-                        item.setText(str(item.data(Qt.UserRole)))
-                    elif item.text() == originItem2:
-                        item.data(Qt.UserRole).errorGroup.append(i)
-                        item.setText(str(item.data(Qt.UserRole)))
+                    itemData = item.data(Qt.UserRole)
+                    if itemData.digitCode in curGourp:
+                        itemData.errorGroup.append(errorGroupIndex)
+                        item.setText(str(itemData))
                 
-                hasError = True
-        
+                errorGroupIndex += 1
+                
         if not hasError:
             QMessageBox.information(self, "校验通过", "未发现异常号码")
 
@@ -157,30 +174,8 @@ class ResultPage(QWidget):
                     item.setForeground(Qt.red)
                 else:
                     item.setForeground(Qt.black)
-
-
-    def on_error_item_selected(self, text):
-        if text == "-------":
-            return
         
-        print("on_error_item_selected: " + text)
-        targetDataModel = None
-        for itemDataModel in self.dataModelMap.values():
-            if text in itemDataModel.stashResultList:
-                print("itemDataModel.index: " + str(itemDataModel.index))
-                targetDataModel = itemDataModel
-                break
-
-        print("弹出一个窗口展示图片")
-        dialog = QDialog(self)
-        dialog.resize(800, 600)
-        layout = QVBoxLayout(dialog)
-        label = QLabel(dialog)
-        layout.addWidget(label)
-        pixmap = QPixmap(targetDataModel.targetImage)
-        label.setPixmap(pixmap)
-        dialog.exec_()
-        
+    
     def on_pre_step(self):
         print("on_pre_step")
         self.signal_pre_step.emit()

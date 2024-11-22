@@ -106,8 +106,6 @@ class MainWindow(QWidget):
 
     # 新一轮检测
     def newRound(self):
-        print("newRound...")
-
         if self.current_page_index > 0:
             self.pages[self.current_page_index].hide()
             self.layout().removeWidget(self.pages[self.current_page_index])
