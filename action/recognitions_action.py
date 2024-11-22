@@ -3,7 +3,21 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, Q
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QThread, Signal
 from rapidocr_onnxruntime import RapidOCR
+from PIL import Image
         
+# 按照位置排序
+def get_text_position(item, image_height):
+    box = item[0]  # 获取文本框坐标
+    y = box[0][1]  # 左上角y坐标
+    x = box[0][0]  # 左上角x坐标
+    
+    # y坐标在图片上1/3的分到第一组(group=0)，其余分到第二组(group=1)
+    group = 0 if y <= image_height/3 else 1
+    
+    # 返回 (组号, x坐标) 作为排序依据
+    return (group, x)
+
+
 class RecognitionsAction(QThread):
     progressUpdated = Signal(int)
     batchFinished = Signal()
@@ -13,13 +27,23 @@ class RecognitionsAction(QThread):
         self.engine = engine
         self.dataModelMap = dataModelMap
 
+
+
     def run(self):
         print("RecognitionsAction 开始识别")
         imageCount = len(self.dataModelMap)
         for index, dataModel in self.dataModelMap.items():
             imgPath = dataModel.targetImage
+
+            # 使用前先获取图片高度
+            img = Image.open(imgPath)
+            img_height = img.height
+
             result, elapse = self.engine(imgPath, use_det=True, use_cls=False, use_rec=True) # 检测+识别
-            texts = [item[1] for item in result]
+
+            sorted_result = sorted(result, key=lambda item: get_text_position(item, img_height))
+
+            texts = [item[1] for item in sorted_result]
             target_text = '号码'
             for text in texts:
                 if text.startswith(target_text):
