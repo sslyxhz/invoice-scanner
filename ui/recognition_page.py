@@ -3,6 +3,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QThread, Signal
 from model.data_model import DataModel
 from action.recognition_action import RecognitionAction
+from ui.image_dialog import ImageDialog
 
 class RecognitionPage(QWidget):
     signal_pre_step = Signal()
@@ -22,10 +23,11 @@ class RecognitionPage(QWidget):
         leftLayout = QVBoxLayout()
         
         self.imagePreviewLabel = QLabel()
-        leftLayout.addWidget(self.imagePreviewLabel)
         pixmap = QPixmap(self.dataModel.targetImage)
         scaled_pixmap = pixmap.scaled(400, 300)
         self.imagePreviewLabel.setPixmap(scaled_pixmap)
+        self.imagePreviewLabel.mousePressEvent = self.show_image_dialog
+        leftLayout.addWidget(self.imagePreviewLabel)
         
 
         # 中间布局
@@ -148,3 +150,9 @@ class RecognitionPage(QWidget):
 
     def on_pre_step(self):
         self.signal_pre_step.emit()
+
+    
+    def show_image_dialog(self, event):
+        imgPath = self.dataModel.targetImage
+        dialog = ImageDialog(imgPath)  # 替换为你的图片路径
+        dialog.exec_()  # 显示对话框
