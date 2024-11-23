@@ -20,25 +20,25 @@ class MainWindow(QWidget):
         self.current_page_index = 0
 
         # 使用 QPalette 设置背景
-        palette = self.palette()
-        pixmap = QPixmap('./assets/background.jpg')
-        pixmap = pixmap.scaled(
-            self.size(),
-            Qt.KeepAspectRatioByExpanding,  # 保持比例填充
-            Qt.SmoothTransformation  # 平滑处理
-        )
-        palette.setBrush(QPalette.Window, QBrush(pixmap))
-        self.setPalette(palette)
-        self.setAutoFillBackground(True)
+        # palette = self.palette()
+        # pixmap = QPixmap('./assets/background.jpg')
+        # pixmap = pixmap.scaled(
+        #     self.size(),
+        #     Qt.KeepAspectRatioByExpanding,  # 保持比例填充
+        #     Qt.SmoothTransformation  # 平滑处理
+        # )
+        # palette.setBrush(QPalette.Window, QBrush(pixmap))
+        # self.setPalette(palette)
+        # self.setAutoFillBackground(True)
         
-        # 按钮等控件的样式
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: rgba(255, 255, 255, 0.9);
-                border: 1px solid #ccc;
-                padding: 5px;
-            }
-        """)
+        # # 按钮等控件的样式
+        # self.setStyleSheet("""
+        #     QPushButton {
+        #         background-color: rgba(255, 255, 255, 0.9);
+        #         border: 1px solid #ccc;
+        #         padding: 5px;
+        #     }
+        # """)
         
         self.newRound()
 

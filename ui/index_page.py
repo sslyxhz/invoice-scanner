@@ -15,8 +15,6 @@ class IndexPage(QWidget):
     def initUI(self):
         layout = QHBoxLayout()
         self.setLayout(layout) 
-
-        # self.setAttribute(Qt.WA_TranslucentBackground)
         
         btnUpload = QPushButton("选择图片")
         btnUpload.clicked.connect(self.select_image)
