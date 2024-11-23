@@ -13,8 +13,10 @@ class IndexPage(QWidget):
         self.dataModelMap = dataModelMap
     
     def initUI(self):
-        layout = QHBoxLayout()  # 创建水平布局
+        layout = QHBoxLayout()
         self.setLayout(layout) 
+
+        # self.setAttribute(Qt.WA_TranslucentBackground)
         
         btnUpload = QPushButton("选择图片")
         btnUpload.clicked.connect(self.select_image)
