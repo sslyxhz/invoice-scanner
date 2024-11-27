@@ -39,11 +39,17 @@ result, elapse = engine(img_path, use_det=True, use_cls=False, use_rec=True) # �
 sorted_result = sorted(result, key=lambda item: get_text_position(item, img_height))
 
 texts = [item[1] for item in sorted_result]
-print(texts)
+# print(texts)
 
 for text in texts:
-    if text.startswith('号码') or text.startswith('母码') or text.startswith('务码') or text.startswith('粤码'):
+    pattern = r'号码：\d{8}'
+    match = re.search(pattern, text)
+    if match:
+        number = match.group(0)
+        print('1>>>', number)
+    elif text.startswith('号码') or text.startswith('母码') or text.startswith('务码') or text.startswith('粤码'):
         # print(text) # 号码：01819689
+        print('text[2]', text[2])
         numbers = ''.join(filter(str.isdigit, text))
         print(numbers)
     elif text.__contains__('号码'):
