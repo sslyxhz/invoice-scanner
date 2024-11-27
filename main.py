@@ -1,14 +1,13 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QLabel, QFileDialog, QProgressDialog, QMessageBox, QSpinBox
-from PySide6.QtGui import QPixmap, QFont, QBrush, QPalette
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QProgressDialog
+from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt
 from rapidocr_onnxruntime import RapidOCR
 from model.data_model import DataModel
 from action.recognitions_action import RecognitionsAction
 from ui.index_page import IndexPage
 from ui.recognition_page import RecognitionPage
 from ui.result_page import ResultPage
-from PIL import Image
 from pillow_heif import register_heif_opener
 
 engine = RapidOCR()
