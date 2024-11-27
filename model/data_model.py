@@ -15,6 +15,8 @@ class DataModel:
         self.stashResultList = []
         
     def addStashResult(self, stashResult):
+        if len(stashResult) > 8:
+            stashResult = stashResult[:8] 
         self.stashResultList.append(stashResult)
         
     def editStashResult(self, oldResult, newResult):
