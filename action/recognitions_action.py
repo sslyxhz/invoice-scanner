@@ -4,6 +4,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, QThread, Signal
 from rapidocr_onnxruntime import RapidOCR
 from PIL import Image
+from pillow_heif import register_heif_opener
         
 # 按照位置排序
 def get_text_position(item, image_height):
@@ -26,8 +27,6 @@ class RecognitionsAction(QThread):
         super().__init__()
         self.engine = engine
         self.dataModelMap = dataModelMap
-
-
 
     def run(self):
         print("RecognitionsAction 开始识别")

@@ -1,6 +1,10 @@
-from rapidocr_onnxruntime import RapidOCR
+import os
 import re
+from rapidocr_onnxruntime import RapidOCR
 from PIL import Image
+from pillow_heif import register_heif_opener
+
+register_heif_opener()
 
 # 按照位置排序
 def get_text_position(item, image_height):
@@ -18,8 +22,9 @@ def get_text_position(item, image_height):
 
 engine = RapidOCR()
 
-# img_path = './imgs/test2.jpg'
-img_path = './imgs/WechatIMG29815.jpg'
+img_path = './imgs/test3.heic'
+# img_path = './imgs/WechatIMG29815.jpg'
+
 # 使用前先获取图片高度
 img = Image.open(img_path)
 img_height = img.height

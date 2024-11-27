@@ -21,7 +21,7 @@ class IndexPage(QWidget):
         layout.addWidget(btnUpload)  # 将按钮添加到布局中
 
     def select_image(self):
-        filePaths, _ = QFileDialog.getOpenFileNames(self, "选择图片", "", "图片文件 (*.jpg *.png *.bmp)")
+        filePaths, _ = QFileDialog.getOpenFileNames(self, "选择图片", "", "图片文件 (*.jpg *.png *.bmp *.heic)")
         if filePaths:
             for index, filePath in enumerate(filePaths):
                 self.dataModelMap[index] = DataModel(index, filePath)
